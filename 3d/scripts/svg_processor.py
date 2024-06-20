@@ -19,6 +19,8 @@ try:
     from svg.path import (
         Path,
         Line,
+        Move,
+        Close,
         parse_path,
     )
 except:
@@ -157,20 +159,22 @@ class SvgProcessor(object):
             path_text = path.attributes['d'].value
             path_obj = parse_path(path_text)
             for line_index, line in enumerate(path_obj):
+                # Moves don't draw anything by themselves, but they do set the
+                # target for subsequent closes, so they should not be removed.
                 slope, intersect = _get_slope_intersect(line.start, line.end)
-
-                # TODO: float inaccuracy and rounding may cause collinear lines to end up in separate buckets in rare
-                # cases, so this is not quite correct. Would be better to put lines into *2* nearest buckets in each
-                # dimension to avoid edge cases.
-                if slope is not None:
-                    slope = round(slope, ndigits=3)
-                intersect = round(intersect, ndigits=3)
-                lines_bucketed_by_slope_intersect[(slope, intersect)].append({
-                    'overall_index': overall_index,
-                    'path_index': path_index,
-                    'line_index': line_index,
-                    'line': line,
-                })
+                if not isinstance(line, Move):
+                    # TODO: float inaccuracy and rounding may cause collinear lines to end up in separate buckets in rare
+                    # cases, so this is not quite correct. Would be better to put lines into *2* nearest buckets in each
+                    # dimension to avoid edge cases.
+                    if slope is not None:
+                        slope = round(slope, ndigits=3)
+                    intersect = round(intersect, ndigits=3)
+                    lines_bucketed_by_slope_intersect[(slope, intersect)].append({
+                        'overall_index': overall_index,
+                        'path_index': path_index,
+                        'line_index': line_index,
+                        'line': line,
+                    })
                 overall_index += 1
 
         to_remove = {}
@@ -212,6 +216,14 @@ class SvgProcessor(object):
                     filtered_path.append(replacement_line)
                     kept += 1
                     kept_length += replacement_line.length()
+                elif isinstance(line, Close):
+                    # Replace the close with a line, because if we removed all
+                    # or part of the previous line in this path, a close will
+                    # not work as expected.
+                    new_line = Line(line.start, line.end)
+                    filtered_path.append(new_line)
+                    kept += 1
+                    kept_length += new_line.length()
                 else:
                     filtered_path.append(line)
                     kept += 1
@@ -341,30 +353,31 @@ class SvgProcessor(object):
 
             self.svg_node.appendChild(new_path_node)
 
-    def add_dimensions(self, width_mm, height_mm):
+    def add_dimensions(self, width_mm, height_mm, mirror=False):
         width_node = self.dom.createElement("path")
-        width_node.setAttribute('d', f'M 0 10 l 0 5 l {width_mm} 0 l 0 -5')
+        mirror_dir = -1 if mirror else 1
+        width_node.setAttribute('d', f'M 0 10 l 0 5 l {mirror_dir * width_mm} 0 l 0 -5')
         width_node.setAttribute('fill', 'none')
         width_node.setAttribute('stroke', '#ff00ff')
         width_node.setAttribute('stroke-width', '1')
         self.svg_node.appendChild(width_node)
 
         width_label_node = self.dom.createElement('text')
-        width_label_node.setAttribute('x', f'{width_mm / 2}')
+        width_label_node.setAttribute('x', f'{mirror_dir * width_mm / 2}')
         width_label_node.setAttribute('y', '25')
         width_label_node.setAttribute('style', 'font: 5px sans-serif; fill: #ff00ff; text-anchor: middle;')
         width_label_node.appendChild(self.dom.createTextNode(f'{width_mm:.2f} mm'))
         self.svg_node.appendChild(width_label_node)
 
         height_node = self.dom.createElement("path")
-        height_node.setAttribute('d', f'M -10 0 l -5 0 l 0 -{height_mm} l 5 0')
+        height_node.setAttribute('d', f'M {-width_mm - 10 if mirror else -10} 0 l -5 0 l 0 -{height_mm} l 5 0')
         height_node.setAttribute('fill', 'none')
         height_node.setAttribute('stroke', '#ff00ff')
         height_node.setAttribute('stroke-width', '1')
         self.svg_node.appendChild(height_node)
 
         height_label_node = self.dom.createElement('text')
-        height_label_node.setAttribute('x', '-20')
+        height_label_node.setAttribute('x', f'{-width_mm - 20 if mirror else -20}')
         height_label_node.setAttribute('y', f'{-height_mm / 2}')
         height_label_node.setAttribute('style', 'font: 5px sans-serif; fill: #ff00ff; text-anchor: end;')
         height_label_node.appendChild(self.dom.createTextNode(f'{height_mm:.2f} mm'))
