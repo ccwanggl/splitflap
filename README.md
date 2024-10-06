@@ -120,6 +120,8 @@ The v0.7 stable release artifacts can be found at the [v0.7 tagged release](http
 ### Beta v2 (52-flap module option - recommended)
 ![2d laser cut rendering](https://s3.amazonaws.com/splitflap-artifacts/master/3d/3d_laser_raster-52.png)
 
+Instructions: [v2 assembly guide](https://paper.dropbox.com/doc/Splitflap-v2-Assembly-Guide-vsT9BHwl9xhE9yZCMB3OC)
+
 Module dimensions: <img height="18" src="https://s3.amazonaws.com/splitflap-artifacts/master/3d/3d_laser_vector-52-module_dimensions.svg" />
 
 Latest auto-generated (untested!) artifacts<sup>:warning:</sup>:
@@ -133,6 +135,8 @@ Latest auto-generated (untested!) artifacts<sup>:warning:</sup>:
 
 ### Beta v2 (40-flap module option)
 ![2d laser cut rendering](https://s3.amazonaws.com/splitflap-artifacts/master/3d/3d_laser_raster-40.png)
+
+Instructions: [v2 assembly guide](https://paper.dropbox.com/doc/Splitflap-v2-Assembly-Guide-vsT9BHwl9xhE9yZCMB3OC)
 
 Module dimensions: <img height="18" src="https://s3.amazonaws.com/splitflap-artifacts/master/3d/3d_laser_vector-40-module_dimensions.svg" />
 
@@ -335,7 +339,7 @@ Latest auto-generated (untested!) artifacts<sup>:warning:</sup>:
 
 For larger displays, you should take additional care to make the hardware more robust to potential faults. The Chainlink Base is an experimental (but unsupported) controller design that adds some additional functionality. This has been tested and appears to work, but is not recommended for general use.
 
-The Chainlink Base PCB is an optional alternative to a Chainink Buddy, designed for particularly large displays.
+The Chainlink Base PCB is an optional alternative to a Chainlink Buddy, designed for particularly large displays.
 It hosts the ESP32 and adds additional connectivity options (terminals for UART and RS485 serial) and
 power distribution (independently-monitored power channels for multiple "zones" of Driver boards).
 
@@ -420,7 +424,6 @@ The project also includes a number of optional 3D printed designs to make assemb
 * [a flap scoring jig](3d/tools/scoring_jig.scad) for precisely marking the cut point when splitting CR80 cards
 * [a flap punch jig](3d/tools/punch_jig.scad) for aligning the punch when making the pin cutouts on either side of a flap
 * [a flap container](3d/tools/flap_container.scad) for storing and organizing stacks of completed flaps
-* [a sensor PCB holder](3d/tools/pcb_case.scad) for storing and protecting soldered sensor boards
 
 All of these designs are parametric and customizable within OpenSCAD. To print them, open up the relevant file in OpenSCAD and use `File -> Export -> Export as STL` to render the design as an STL file for your slicer.
 
@@ -470,7 +473,7 @@ an informed decision about which revision(s) to use.
 
 ## Code
 ### Firmware
-The driver firmware is written using PlatformIO with the Arduino framework and is available at [`arduino/splitflap/Splitflap/Splitflap.ino`](arduino/splitflap/Splitflap/Splitflap.ino). 
+The driver firmware is written using PlatformIO with the Arduino framework and is available at [`firmware/`](firmware/). 
 
 The firmware implements a closed-loop controller that accepts letters as input over USB serial and drives the stepper motors using a precomputed acceleration ramp for smooth control. The firmware automatically calibrates the spool position at startup, using the hall-effect magnetic sensor, and will automatically recalibrate itself if it ever detects that the spool position has gotten out of sync. If a commanded rotation is expected to bring the spool past the "home" position, it will confirm that the sensor is triggered neither too early nor too late; otherwise it will search for the "home" position to get in sync before continuing to the desired letter.
 

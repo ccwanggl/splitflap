@@ -18,8 +18,8 @@
 
 // General splitflap includes
 #include "config.h"
-#include "src/splitflap_module.h"
-#include "src/spi_io_config.h"
+#include "splitflap_module.h"
+#include "spi_io_config.h"
 
 // ESP32-specific includes
 #include "semaphore_guard.h"
@@ -376,7 +376,7 @@ void SplitflapTask::log(const char* msg) {
 void SplitflapTask::showString(const char* str, uint8_t length, bool force_full_rotation) {
     Command command = {};
     command.command_type = CommandType::MODULES;
-    for (uint8_t i = 0; i < length; i++) {
+    for (uint8_t i = 0; i < length && i < NUM_MODULES; i++) {
         int8_t index = findFlapIndex(str[i]);
         if (index != -1) {
             if (force_full_rotation || index != modules[i]->GetTargetFlapIndex()) {
